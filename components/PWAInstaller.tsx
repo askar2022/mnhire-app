@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 
 export function PWAInstaller() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
@@ -56,8 +57,8 @@ export function PWAInstaller() {
       <div className="bg-white rounded-lg shadow-xl border border-gray-200 p-4">
         <div className="flex items-start space-x-3">
           <div className="flex-shrink-0">
-            <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold">HBA</span>
+            <div className="w-10 h-10 rounded-lg overflow-hidden">
+              <Image src="/mnhire-logo.png" alt="MNHire" width={40} height={40} className="object-contain" />
             </div>
           </div>
           <div className="flex-1">
