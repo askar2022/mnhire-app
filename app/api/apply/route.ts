@@ -5,7 +5,6 @@ import { NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
-  // Verify the user is authenticated server-side
   const supabaseAuth = await createClient()
   const { data: { user: authUser } } = await supabaseAuth.auth.getUser()
 
@@ -14,6 +13,7 @@ export async function POST(request: Request) {
   }
 
   const supabase = createAdminClient()
+  const db = supabase as any
 
   try {
     const formData = await request.formData()
@@ -39,8 +39,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Verify the job exists and is published
-    const { data: job } = await supabase
+    const { data: job } = await db
       .from('job_postings')
       .select('id')
       .eq('id', jobId)
@@ -51,28 +50,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Job not found or not available' }, { status: 404 })
     }
 
-    // Upsert applicant record
     let applicantId: string
 
-    const { data: existing } = await supabase
+    const { data: existing } = await db
       .from('applicants')
       .select('id')
       .eq('email', email)
       .single()
 
     if (existing) {
-      await supabase.from('applicants').update({
-        first_name: firstName,
-        last_name: lastName,
-        phone,
-        address,
-        city,
-        state,
-        zip,
+      await db.from('applicants').update({
+        first_name: firstName, last_name: lastName,
+        phone, address, city, state, zip,
       }).eq('id', existing.id)
       applicantId = existing.id
     } else {
-      const { data: newApplicant, error: applicantError } = await supabase
+      const { data: newApplicant, error: applicantError } = await db
         .from('applicants')
         .insert({ first_name: firstName, last_name: lastName, email, phone, address, city, state, zip })
         .select('id')
@@ -82,7 +75,6 @@ export async function POST(request: Request) {
       applicantId = newApplicant.id
     }
 
-    // Upload files server-side using admin client
     let resumeUrl: string | null = null
     let coverLetterUrl: string | null = null
 
@@ -90,13 +82,10 @@ export async function POST(request: Request) {
       const fileExt = resumeFile.name.split('.').pop()
       const fileName = `${applicantId}/resume_${Date.now()}.${fileExt}`
       const fileBuffer = Buffer.from(await resumeFile.arrayBuffer())
-
       const { error: uploadError } = await supabase.storage
         .from('applications')
         .upload(fileName, fileBuffer, { contentType: resumeFile.type })
-
       if (uploadError) throw new Error(uploadError.message)
-
       const { data: urlData } = supabase.storage.from('applications').getPublicUrl(fileName)
       resumeUrl = urlData.publicUrl
     }
@@ -105,19 +94,15 @@ export async function POST(request: Request) {
       const fileExt = coverLetterFile.name.split('.').pop()
       const fileName = `${applicantId}/cover_${Date.now()}.${fileExt}`
       const fileBuffer = Buffer.from(await coverLetterFile.arrayBuffer())
-
       const { error: uploadError } = await supabase.storage
         .from('applications')
         .upload(fileName, fileBuffer, { contentType: coverLetterFile.type })
-
       if (uploadError) throw new Error(uploadError.message)
-
       const { data: urlData } = supabase.storage.from('applications').getPublicUrl(fileName)
       coverLetterUrl = urlData.publicUrl
     }
 
-    // Create the application
-    const { data: application, error: appError } = await supabase
+    const { data: application, error: appError } = await db
       .from('applications')
       .insert({
         job_posting_id: jobId,
@@ -135,24 +120,19 @@ export async function POST(request: Request) {
 
     if (appError) throw new Error(appError.message)
 
-    // Save answers
     if (Object.keys(answers).length > 0) {
       const answerRows = Object.entries(answers).map(([question, answer]) => ({
-        application_id: application.id,
-        question,
-        answer,
+        application_id: application.id, question, answer,
       }))
-      await supabase.from('application_answers').insert(answerRows)
+      await db.from('application_answers').insert(answerRows)
     }
 
-    // Stage history
-    await supabase.from('application_stage_history').insert({
+    await db.from('application_stage_history').insert({
       application_id: application.id,
       to_status: 'Submitted',
       comment: 'Application submitted',
     })
 
-    // Fire email notification (non-blocking)
     fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://demo.mnhire.org'}/api/emails/application-submitted`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

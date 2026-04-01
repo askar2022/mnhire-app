@@ -11,9 +11,7 @@ export async function POST(request: Request) {
 
   const supabase = createAdminClient()
 
-  // Verify user is a staff member
-  const { data: staffUser } = await supabase
-    .from('users')
+  const { data: staffUser } = await (supabase.from('users') as any)
     .select('role')
     .eq('id', authUser.id)
     .single()
@@ -28,9 +26,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    // Create interview
-    const { data: interview, error: interviewError } = await supabase
-      .from('interviews')
+    const { data: interview, error: interviewError } = await (supabase.from('interviews') as any)
       .insert({
         application_id,
         stage,
@@ -44,33 +40,27 @@ export async function POST(request: Request) {
 
     if (interviewError) throw new Error(interviewError.message)
 
-    // Add participants
     if (participants && participants.length > 0) {
       const participantRows = participants.map((userId: string) => ({
         interview_id: interview.id,
         user_id: userId,
       }))
-      await supabase.from('interview_participants').insert(participantRows)
+      await (supabase.from('interview_participants') as any).insert(participantRows)
     }
 
-    // Update application status
     const newStatus = stage === 'Phone Screen' ? 'Phone Screen' : 'Interview'
-    await supabase
-      .from('applications')
+    await (supabase.from('applications') as any)
       .update({ status: newStatus })
       .eq('id', application_id)
 
-    // Stage history
-    await supabase.from('application_stage_history').insert({
+    await (supabase.from('application_stage_history') as any).insert({
       application_id,
       to_status: newStatus,
       changed_by: authUser.id,
       comment: `Interview scheduled: ${stage}`,
     })
 
-    // Fetch applicant + job info for email
-    const { data: applicationData } = await supabase
-      .from('applications')
+    const { data: applicationData } = await (supabase.from('applications') as any)
       .select('applicants!inner(first_name, last_name, email), job_postings!inner(title)')
       .eq('id', application_id)
       .single()
@@ -89,9 +79,9 @@ export async function POST(request: Request) {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            applicantEmail: (applicant as any).email,
-            applicantName: `${(applicant as any).first_name} ${(applicant as any).last_name}`,
-            jobTitle: (jobPosting as any).title,
+            applicantEmail: applicant.email,
+            applicantName: `${applicant.first_name} ${applicant.last_name}`,
+            jobTitle: jobPosting.title,
             interviewDetails: { stage, scheduled_at, location, join_link },
           }),
         }).catch(() => {})
@@ -104,16 +94,14 @@ export async function POST(request: Request) {
   }
 }
 
-export async function GET(request: Request) {
+export async function GET() {
   const supabaseAuth = await createClient()
   const { data: { user: authUser } } = await supabaseAuth.auth.getUser()
   if (!authUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const supabase = createAdminClient()
 
-  // Return staff users for participant selection
-  const { data: users } = await supabase
-    .from('users')
+  const { data: users } = await (supabase.from('users') as any)
     .select('id, name, email, role')
     .in('role', ['HR', 'Admin', 'Principal', 'HiringManager', 'Interviewer',
       'AcademicDirector', 'SPEDDirector', 'OperationManager', 'AssistantPrincipal', 'ITSupport', 'ExecutiveDirector'])
