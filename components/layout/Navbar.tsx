@@ -4,22 +4,28 @@ import { createClient } from '@/lib/supabase/server'
 import { NavbarClient } from './NavbarClient'
 
 export async function Navbar() {
-  const supabase = await createClient()
-  const { data: { user: authUser } } = await supabase.auth.getUser()
-
+  let authUser = null
   let userData = null
-  if (authUser) {
-    const { data } = await supabase
-      .from('users')
-      .select('name, email, role')
-      .eq('id', authUser.id)
-      .single()
-    // Fall back to auth user info if not in users table (e.g. applicants)
-    userData = data ?? {
-      name: authUser.email ?? '',
-      email: authUser.email ?? '',
-      role: 'applicant',
+
+  try {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    authUser = user
+
+    if (authUser) {
+      const { data } = await supabase
+        .from('users')
+        .select('name, email, role')
+        .eq('id', authUser.id)
+        .single()
+      userData = data ?? {
+        name: authUser.email ?? '',
+        email: authUser.email ?? '',
+        role: 'applicant',
+      }
     }
+  } catch {
+    // Supabase not configured or unavailable — render navbar without auth state
   }
 
   return (

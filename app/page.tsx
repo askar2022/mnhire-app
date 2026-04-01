@@ -2,13 +2,19 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 
 export default async function HomePage() {
-  const supabase = await createClient()
-  const { data: jobs } = await supabase
-    .from('job_postings')
-    .select('*')
-    .eq('posting_status', 'Published')
-    .order('created_at', { ascending: false })
-    .limit(6)
+  let jobs = null
+  try {
+    const supabase = await createClient()
+    const { data } = await supabase
+      .from('job_postings')
+      .select('*')
+      .eq('posting_status', 'Published')
+      .order('created_at', { ascending: false })
+      .limit(6)
+    jobs = data
+  } catch {
+    // DB not yet configured — show page without jobs
+  }
 
   return (
     <div className="bg-white">
