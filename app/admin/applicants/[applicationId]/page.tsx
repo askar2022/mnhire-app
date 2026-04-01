@@ -15,7 +15,7 @@ export default async function ApplicationReviewPage({
   const supabase = await createClient()
 
   // Get application with all related data
-  const { data: application } = await supabase
+  const { data: application } = await (supabase as any)
     .from('applications')
     .select(`
       *,
