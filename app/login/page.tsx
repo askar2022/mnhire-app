@@ -128,14 +128,8 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 relative">
-      {/* School Bus Background Image */}
-      <div 
-        className="absolute inset-0 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: 'url(/Beast_1-scaled.jpg)' }}
-      >
-        {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/40"></div>
-      </div>
+      {/* Gradient background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-primary-700 via-primary-800 to-primary-900"></div>
       
       <div className="max-w-md w-full relative z-10">
         <div className="bg-white rounded-2xl shadow-xl p-8">
