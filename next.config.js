@@ -1,9 +1,14 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   images: {
-    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
   },
+  serverExternalPackages: ['@supabase/ssr', '@supabase/supabase-js', 'resend'],
 }
 
 module.exports = nextConfig
-
