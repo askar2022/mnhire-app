@@ -43,7 +43,6 @@ export async function Navbar() {
                 height={80}
                 className="object-contain"
               />
-              <span className="text-xl font-bold text-gray-900">MNHire</span>
             </Link>
             <NavbarClient user={userData} section="links" />
           </div>
