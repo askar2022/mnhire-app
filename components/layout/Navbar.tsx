@@ -39,8 +39,8 @@ export async function Navbar() {
               <Image
                 src="/mnhire-logo.png"
                 alt="MNHire Logo"
-                width={40}
-                height={40}
+                width={56}
+                height={56}
                 className="object-contain"
               />
               <span className="text-xl font-bold text-gray-900">MNHire</span>

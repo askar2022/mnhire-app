@@ -139,8 +139,8 @@ export default function LoginPage() {
               <Image 
                 src="/mnhire-logo.png" 
                 alt="MNHire Logo" 
-                width={56} 
-                height={56}
+                width={80} 
+                height={80}
                 className="object-contain"
               />
               <span className="text-2xl font-bold text-gray-900">MNHire</span>
