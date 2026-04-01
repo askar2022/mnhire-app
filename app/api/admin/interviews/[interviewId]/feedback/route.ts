@@ -28,7 +28,7 @@ export async function POST(
     const body = await request.json()
     const { rating_overall, ratings_json, comments, recommendation } = body
 
-    const { error } = await supabase.from('interview_feedback').upsert({
+    const { error } = await (supabase.from('interview_feedback') as any).upsert({
       interview_id: interviewId,
       reviewer_id: authUser.id,
       rating_overall,
