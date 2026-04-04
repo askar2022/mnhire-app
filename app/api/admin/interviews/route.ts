@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/server'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
+import { sendInterviewScheduledEmail } from '@/lib/email'
 
 export const dynamic = 'force-dynamic'
 
@@ -74,17 +75,12 @@ export async function POST(request: Request) {
         : applicationData.job_postings
 
       if (applicant && jobPosting) {
-        const appUrl = (process.env.NEXT_PUBLIC_APP_URL || 'https://demo.mnhire.org').replace(/\/$/, '')
-        fetch(`${appUrl}/api/emails/interview-scheduled`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            applicantEmail: applicant.email,
-            applicantName: `${applicant.first_name} ${applicant.last_name}`,
-            jobTitle: jobPosting.title,
-            interviewDetails: { stage, scheduled_at, location, join_link },
-          }),
-        }).catch(() => {})
+        sendInterviewScheduledEmail(
+          applicant.email,
+          `${applicant.first_name} ${applicant.last_name}`,
+          jobPosting.title,
+          { stage, scheduled_at, location, join_link }
+        ).catch(err => console.error('Failed to send interview email:', err))
       }
     }
 
